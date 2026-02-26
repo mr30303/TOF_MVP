@@ -1,0 +1,292 @@
+:root {
+  color-scheme: light;
+  font-family: "Segoe UI", "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%);
+  color: #0f172a;
+}
+
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+  min-height: 100vh;
+  padding: 20px 16px 32px;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.subtitle {
+  margin: 8px 0 0;
+  color: #475569;
+  font-size: 0.95rem;
+}
+
+.card {
+  margin-top: 16px;
+  border-radius: 12px;
+  border: 1px solid #dbe6ff;
+  background: #ffffff;
+  padding: 14px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+}
+
+.label {
+  color: #475569;
+}
+
+.value {
+  font-family: "Consolas", "SFMono-Regular", monospace;
+  word-break: break-all;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 10px;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.status-connected {
+  background: #15803d;
+}
+
+.status-connecting,
+.status-reconnecting {
+  background: #b45309;
+}
+
+.status-disconnected {
+  background: #b91c1c;
+}
+
+.status-info {
+  background: #1d4ed8;
+}
+
+.controls {
+  display: grid;
+  gap: 8px;
+}
+
+.input {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+}
+
+.button {
+  border: 0;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #fff;
+  padding: 10px 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.button:disabled {
+  background: #93c5fd;
+  cursor: not-allowed;
+}
+
+.toggle-row {
+  display: grid;
+  gap: 8px;
+}
+
+.toggle-group {
+  display: flex;
+  gap: 8px;
+}
+
+.button-toggle {
+  flex: 1;
+  background: #cbd5e1;
+  color: #0f172a;
+}
+
+.button-toggle-active {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.value-strong {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.mapping-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.mapping-row {
+  display: grid;
+  gap: 6px;
+}
+
+.option-row {
+  display: grid;
+  gap: 6px;
+  font-size: 0.92rem;
+}
+
+.range-input {
+  width: 100%;
+}
+
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #334155;
+  font-size: 0.92rem;
+}
+
+.viewer-shell {
+  position: relative;
+  width: 100%;
+  min-height: 400px;
+  border-radius: 10px;
+  border: 1px solid #dbe6ff;
+  background: linear-gradient(180deg, #f4f8ff 0%, #eaf2ff 100%);
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.viewer-canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.viewer-shell canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: pan-y;
+}
+
+.viewer-legend {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  min-width: 120px;
+  border: 1px solid rgba(148, 163, 184, 0.55);
+  border-radius: 8px;
+  padding: 8px;
+  background: rgba(2, 6, 23, 0.72);
+  color: #e2e8f0;
+  backdrop-filter: blur(3px);
+}
+
+.viewer-legend-title {
+  font-size: 0.68rem;
+  color: #cbd5e1;
+}
+
+.viewer-legend-bar {
+  margin-top: 6px;
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    #22d3ee 0%,
+    #84cc16 35%,
+    #facc15 68%,
+    #ef4444 100%
+  );
+}
+
+.viewer-legend-range {
+  margin-top: 6px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-family: "Consolas", "SFMono-Regular", monospace;
+  font-size: 0.72rem;
+}
+
+.collapsible-card {
+  padding-top: 10px;
+}
+
+.summary-toggle {
+  cursor: pointer;
+  list-style: none;
+  font-weight: 600;
+  color: #334155;
+}
+
+.summary-toggle::-webkit-details-marker {
+  display: none;
+}
+
+.summary-toggle::before {
+  content: "\25B8";
+  display: inline-block;
+  margin-right: 8px;
+  color: #475569;
+  transform: translateY(-1px);
+}
+
+.collapsible-card[open] .summary-toggle::before {
+  content: "\25BE";
+}
+
+.collapsible-body {
+  margin-top: 10px;
+  display: grid;
+  gap: 12px;
+}
+
+.subpanel {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 10px;
+}
+
+.sensor-grid {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.sensor-cell {
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 6px 0;
+  text-align: center;
+  font-family: "Consolas", "SFMono-Regular", monospace;
+  font-size: 0.72rem;
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.sensor-cell-invalid {
+  background: #f8fafc;
+  color: #94a3b8;
+  border-style: dashed;
+}
