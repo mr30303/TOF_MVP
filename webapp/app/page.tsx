@@ -2,13 +2,50 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ToFDashboard } from "../components/ToFDashboard";
-import { ToFViewer } from "../components/ToFViewer";
+import {
+  DEFAULT_CEILING_HEIGHT_M,
+  type RenderMode,
+  type ViewMode,
+  ToFViewer,
+} from "../components/ToFViewer";
 import { useToFStream } from "../components/useToFStream";
 import { isValidCell, parsePacket } from "../components/utils";
 
 const DEFAULT_WS_URL = process.env.NEXT_PUBLIC_WS_URL ?? "ws://innert.iptime.org:28080";
 const DEFAULT_DEPTH_SCALE = 0.001;
 const DEFAULT_XY_SCALE = 0.05;
+const MIN_DISTANCE_MM = 300;
+const MAX_DISTANCE_MM = 3800;
+const MM_TO_M = 0.001;
+const RAY_H_FOV_DEG = 45;
+const RAY_V_FOV_DEG = 45;
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+function buildRayDirections(hFovDeg: number, vFovDeg: number): Float32Array {
+  const directions = new Float32Array(64 * 3);
+  const tanHalfH = Math.tan((hFovDeg * Math.PI) / 360);
+  const tanHalfV = Math.tan((vFovDeg * Math.PI) / 360);
+  for (let index = 0; index < 64; index += 1) {
+    const row = Math.floor(index / 8);
+    const col = index % 8;
+    const nx = ((col + 0.5) / 8 - 0.5) * 2;
+    const nz = (0.5 - (row + 0.5) / 8) * 2;
+    const x = nx * tanHalfH;
+    const y = -1;
+    const z = nz * tanHalfV;
+    const invLen = 1 / Math.sqrt(x * x + y * y + z * z);
+    const base = index * 3;
+    directions[base] = x * invLen;
+    directions[base + 1] = y * invLen;
+    directions[base + 2] = z * invLen;
+  }
+  return directions;
+}
+
+const PRECOMPUTED_RAY_DIRS = buildRayDirections(RAY_H_FOV_DEG, RAY_V_FOV_DEG);
 
 export default function HomePage() {
   const [urlInput, setUrlInput] = useState(DEFAULT_WS_URL);
@@ -16,6 +53,8 @@ export default function HomePage() {
   const [littleEndian, setLittleEndian] = useState(true);
   const [depthScale, setDepthScale] = useState(DEFAULT_DEPTH_SCALE);
   const [xyScale, setXyScale] = useState(DEFAULT_XY_SCALE);
+  const [renderMode, setRenderMode] = useState<RenderMode>("ray");
+  const viewMode: ViewMode = "topdown";
   const [useBitmask, setUseBitmask] = useState(true);
   const [reverseBitOrder, setReverseBitOrder] = useState(false);
   const [now, setNow] = useState(Date.now());
@@ -50,7 +89,7 @@ export default function HomePage() {
       return { min: null as number | null, max: null as number | null };
     }
 
-    const values: number[] = [];
+    const valuesMm: number[] = [];
     for (let index = 0; index < 64; index += 1) {
       const valid = useBitmask
         ? isValidCell(parsed.bitmask, index, reverseBitOrder)
@@ -58,18 +97,26 @@ export default function HomePage() {
       if (!valid) {
         continue;
       }
-      values.push(parsed.values[index]);
+      if (renderMode === "ray") {
+        const depthMm = clamp(parsed.values[index], MIN_DISTANCE_MM, MAX_DISTANCE_MM);
+        const dirBase = index * 3;
+        const endY =
+          DEFAULT_CEILING_HEIGHT_M + PRECOMPUTED_RAY_DIRS[dirBase + 1] * (depthMm * MM_TO_M);
+        valuesMm.push(endY * 1000);
+      } else {
+        valuesMm.push(parsed.values[index]);
+      }
     }
 
-    if (values.length === 0) {
+    if (valuesMm.length === 0) {
       return { min: null as number | null, max: null as number | null };
     }
 
     return {
-      min: Math.min(...values),
-      max: Math.max(...values),
+      min: Math.round(Math.min(...valuesMm)),
+      max: Math.round(Math.max(...valuesMm)),
     };
-  }, [parsed, useBitmask, reverseBitOrder]);
+  }, [parsed, useBitmask, reverseBitOrder, renderMode]);
 
   return (
     <main className="page">
@@ -86,10 +133,22 @@ export default function HomePage() {
           <span className="value">{"\ud0d1-\uce21\uba74 \uace0\uc815 (8x8 \uac12 \ubcc0\ud654 \uad00\ucc30\uc6a9)"}</span>
         </div>
         <div className="row">
+          <span className="label">{"\ub80c\ub354 \ubaa8\ub4dc"}</span>
+          <span className="value">{renderMode === "tower" ? "tower" : "ray"}</span>
+        </div>
+        {renderMode === "ray" ? (
+          <div className="row">
+            <span className="label">{"\uce74\uba54\ub77c \ubdf0"}</span>
+            <span className="value">{viewMode}</span>
+          </div>
+        ) : null}
+        <div className="row">
           <span className="label">{"\ubdf0\uc5b4 \uac00\uc774\ub4dc"}</span>
           <span className="value">
             {
-              "\ub192\uc774\uac00 \ubc14\ub2e5\uc5d0\uc11c \uc704\ub85c \ucc44\uc6cc\uc9c0\ub294 \ud615\ud0dc\ub85c \ud45c\uc2dc\ub429\ub2c8\ub2e4."
+              renderMode === "ray"
+                ? "\ucc9c\uc7a5 \uc13c\uc11c\uc5d0\uc11c y=0 \ubc14\ub2e5\uae4c\uc9c0 \ub808\uc774\uc640 \ub05d\uc810\uc744 \ud45c\uc2dc\ud569\ub2c8\ub2e4."
+                : "\ub192\uc774\uac00 \ubc14\ub2e5\uc5d0\uc11c \uc704\ub85c \ucc44\uc6cc\uc9c0\ub294 \ud615\ud0dc\ub85c \ud45c\uc2dc\ub429\ub2c8\ub2e4."
             }
           </span>
         </div>
@@ -102,6 +161,9 @@ export default function HomePage() {
           reverseBitOrder={reverseBitOrder}
           legendMin={frameMinMax.min}
           legendMax={frameMinMax.max}
+          renderMode={renderMode}
+          ceilingHeight={DEFAULT_CEILING_HEIGHT_M}
+          view={viewMode}
         />
       </section>
 
@@ -152,6 +214,39 @@ export default function HomePage() {
               </span>
             </div>
           </section>
+
+          <section className="subpanel controls">
+            <span className="label">{"\ub80c\ub354 \ubaa8\ub4dc"}</span>
+            <div className="toggle-group">
+              <button
+                className={`button button-toggle ${
+                  renderMode === "tower" ? "button-toggle-active" : ""
+                }`}
+                type="button"
+                onClick={() => setRenderMode("tower")}
+              >
+                tower
+              </button>
+              <button
+                className={`button button-toggle ${
+                  renderMode === "ray" ? "button-toggle-active" : ""
+                }`}
+                type="button"
+                onClick={() => setRenderMode("ray")}
+              >
+                ray
+              </button>
+            </div>
+          </section>
+
+          {renderMode === "ray" ? (
+            <section className="subpanel">
+              <div className="row">
+                <span className="label">{"\uce74\uba54\ub77c \ubdf0 \ud504\ub9ac\uc14b"}</span>
+                <span className="value">topdown</span>
+              </div>
+            </section>
+          ) : null}
 
           <section className="subpanel controls">
             <label htmlFor="ws-url">{"\uc6f9\uc18c\ucf13 \uc8fc\uc18c"}</label>
